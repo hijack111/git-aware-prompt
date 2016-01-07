@@ -1,34 +1,33 @@
-find_git_branch() {
+git_info() {
   # Based on: http://stackoverflow.com/a/13003854/170413
   local branch
   if branch=$(git rev-parse --abbrev-ref HEAD 2> /dev/null); then
     if [[ "$branch" == "HEAD" ]]; then
-      branch='detached*'
+      git_branch='*'
+    else
+      git_branch="$branch"
     fi
-    git_branch="$branch"
+
+    if ! git diff-index --cached --quiet HEAD --ignore-submodules --; then
+      git_staged='|idx'
+    else
+      git_staged=''
+    fi
+
+    if ! git diff-files --quiet --ignore-submodules --; then
+      git_dirty='|+'
+    else
+      git_dirty=''
+    fi
+
+    git_info=" ❬${git_branch}${git_staged}${git_dirty}❭"
   else
-    git_branch=""
+    git_branch=''
+    git_info=''
   fi
 }
 
-find_git_dirty() {
-  local status=$(git status --porcelain 2> /dev/null)
-  if [[ "$status" != "" ]]; then
-    git_dirty='|+'
-  else
-    git_dirty=''
-  fi
-}
-
-git_info() {
-  if [ "$git_branch" ]; then
-    git_info=" ❬$git_branch$git_dirty❭"
-  else
-    git_info=""
-  fi
-}
-
-PROMPT_COMMAND="find_git_branch; find_git_dirty; git_info; $PROMPT_COMMAND"
+PROMPT_COMMAND="git_info; $PROMPT_COMMAND"
 
 # Default Git enabled prompt with dirty state
 # export PS1="\u@\h \w \[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
