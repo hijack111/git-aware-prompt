@@ -1,14 +1,15 @@
 git_info() {
   # Based on: http://stackoverflow.com/a/13003854/170413
   local branch
-  if branch=$(git rev-parse --abbrev-ref HEAD 2> /dev/null); then
-    if [[ "$branch" == "HEAD" ]]; then
-      git_branch='*'
+  if git rev-parse 2> /dev/null; then
+    branch=$(git symbolic-ref HEAD 2> /dev/null)
+    if [[ -z "$branch" ]]; then
+      git_branch="$(grep -o '^.\{7\}' "$(git rev-parse --show-toplevel)/.git/HEAD")"
     else
-      git_branch="$branch"
+      git_branch="${branch##*/}"
     fi
 
-    if ! git diff-index --cached --quiet HEAD --ignore-submodules --; then
+    if ! git diff-index --cached --quiet HEAD --ignore-submodules -- 2> /dev/null; then
       git_staged='|idx'
     else
       git_staged=''
